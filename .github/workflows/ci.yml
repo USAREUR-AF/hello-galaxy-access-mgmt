@@ -1,0 +1,58 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck the scripts
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # Drivers source the lib at runtime; check syntax + common bugs.
+          # SC2034: cross-file globals set in the lib, read by sourcing scripts.
+          # SC2010/SC2164: deliberate (scenario discovery; cd guarded by set -e).
+          shellcheck -e SC1090,SC1091,SC2086,SC2046,SC2034,SC2010,SC2164 \
+            lib/access-mgmt.sh local-fabric/lib-fabric.sh \
+            bin/access-mgmt \
+            scenarios/*/run.sh \
+            local-fabric/*.sh \
+            report/generate-report.sh
+
+      - name: every scenario has a README and a run.sh
+        run: |
+          rc=0
+          for d in scenarios/*/; do
+            [ -f "$d/README.md" ] || { echo "missing README: $d"; rc=1; }
+            [ -f "$d/run.sh" ]   || { echo "missing run.sh: $d"; rc=1; }
+            bash -n "$d/run.sh"  || { echo "syntax error: $d/run.sh"; rc=1; }
+          done
+          exit $rc
+
+      - name: scripts are executable
+        run: |
+          rc=0
+          for f in bin/access-mgmt scenarios/*/run.sh local-fabric/*.sh report/generate-report.sh; do
+            [ -x "$f" ] || { echo "not executable: $f"; rc=1; }
+          done
+          exit $rc
+
+      - name: runner lists scenarios
+        run: bin/access-mgmt list
+
+      - name: slot-pool ACL renders correctly (full grants every slot; revoke reclaims loud-mouth)
+        run: |
+          source local-fabric/lib-fabric.sh
+          render_router_config full   | grep -q "s-loud"            || { echo "full config missing loud-mouth slot grant"; exit 1; }
+          render_router_config full   | grep -q "s-weather"         || { echo "full config missing weather slot grant"; exit 1; }
+          render_router_config full   | grep -q "s-free"            || { echo "full config missing free slot (pre-cut, unheld)"; exit 1; }
+          render_router_config revoke | grep -q "s-loud"            && { echo "revoke config still grants loud-mouth"; exit 1; }
+          render_router_config revoke | grep -q "s-weather"         || { echo "revoke config wrongly dropped an unrelated slot"; exit 1; }
+          echo "slot-pool ACL render OK (full grants all slots; revoke reclaims only loud-mouth)"

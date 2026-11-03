@@ -1,0 +1,45 @@
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa7b4"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{fill:#9aa7b4;font-size:13px} .ttl{fill:#e6edf3;font-size:15px;font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .ok{fill:#7ee2a8;font-size:12px} .old{fill:#f85149;font-size:12px} .new{fill:#3fb950;font-size:12px}
+    .anchor{fill:#f5b14c;font-size:12px}
+  </style>
+
+  <!-- timeline spine -->
+  <line x1="40" y1="150" x2="860" y2="150" stroke="#2a323c" stroke-width="2"/>
+
+  <!-- before -->
+  <rect x="40" y="90" width="220" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="60" y="116" class="ttl">before</text>
+  <text x="60" y="140" class="lbl">weather-vane publishing</text>
+  <text x="60" y="162" class="mono anchor">anchor a11ce551…</text>
+  <text x="60" y="182" class="mono old">leaf 99:1F:9C…</text>
+  <text x="60" y="200" class="ok">observer ✓ sees samples</text>
+
+  <!-- rotate event -->
+  <circle cx="450" cy="150" r="34" fill="#1c232c" stroke="#f5b14c" stroke-width="2"/>
+  <text x="450" y="146" text-anchor="middle" class="ttl">rotate</text>
+  <text x="450" y="164" text-anchor="middle" class="lbl">in place</text>
+  <text x="450" y="232" text-anchor="middle" class="lbl">goat admin rotate weather-vane</text>
+  <text x="450" y="250" text-anchor="middle" class="ok">router: 0 reloads · ACL unchanged</text>
+
+  <line x1="260" y1="150" x2="414" y2="150" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <line x1="486" y1="150" x2="638" y2="150" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar2)"/>
+
+  <!-- after -->
+  <rect x="640" y="90" width="220" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="660" y="116" class="ttl">after</text>
+  <text x="660" y="140" class="lbl">weather-vane STILL publishing</text>
+  <text x="660" y="162" class="mono anchor">anchor a11ce551…  (same)</text>
+  <text x="660" y="182" class="mono new">leaf 85:A4:2B…  (fresh)</text>
+  <text x="660" y="200" class="ok">observer ✓ sees samples</text>
+
+  <text x="450" y="40" text-anchor="middle" class="ttl">Credential refreshes; identity (the slot) persists</text>
+  <text x="450" y="62" text-anchor="middle" class="lbl">the leaf fingerprint changes — the anchor and the router ACL do not</text>
+</svg>

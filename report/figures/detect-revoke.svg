@@ -1,0 +1,57 @@
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="ar3" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa7b4"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{fill:#9aa7b4;font-size:12.5px} .ttl{fill:#e6edf3;font-size:14px;font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+    .sub{fill:#9aa7b4;font-size:11px}
+  </style>
+
+  <!-- 5 stages across -->
+  <!-- 1 flood -->
+  <rect x="20" y="80" width="150" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="95" y="106" text-anchor="middle" class="ttl">1 · flood</text>
+  <text x="95" y="132" text-anchor="middle" class="lbl">loud-mouth</text>
+  <text x="95" y="150" text-anchor="middle" class="mono" fill="#f85149">450 msgs/s</text>
+  <text x="95" y="172" text-anchor="middle" class="sub">situational lane</text>
+
+  <!-- 2 gauge -->
+  <rect x="195" y="80" width="150" height="120" rx="12" fill="#1a0f10" stroke="#6f2723"/>
+  <text x="270" y="106" text-anchor="middle" class="ttl">2 · gauge</text>
+  <circle cx="270" cy="142" r="20" fill="#f85149"/>
+  <text x="270" y="147" text-anchor="middle" class="mono" fill="#0e1116" font-weight="700">RED</text>
+  <text x="270" y="184" text-anchor="middle" class="sub">goat health · C2 over target</text>
+
+  <!-- 3 footprint -->
+  <rect x="370" y="80" width="150" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="445" y="106" text-anchor="middle" class="ttl">3 · footprint</text>
+  <text x="445" y="132" text-anchor="middle" class="mono" fill="#f5b14c">rank #1</text>
+  <text x="445" y="152" text-anchor="middle" class="lbl">⚠ near-limit</text>
+  <text x="445" y="176" text-anchor="middle" class="sub">names the identity</text>
+
+  <!-- 4 cut -->
+  <circle cx="595" cy="140" r="36" fill="#1c232c" stroke="#f5b14c" stroke-width="2"/>
+  <text x="595" y="136" text-anchor="middle" class="ttl">4 · cut</text>
+  <text x="595" y="154" text-anchor="middle" class="lbl">slot reclaim</text>
+  <text x="595" y="200" text-anchor="middle" class="sub">mesh-first revoke</text>
+
+  <!-- 5 denied+recover -->
+  <rect x="700" y="80" width="180" height="120" rx="12" fill="#0f1a12" stroke="#1f6f3f"/>
+  <text x="790" y="106" text-anchor="middle" class="ttl">5 · denied → recover</text>
+  <text x="790" y="134" text-anchor="middle" class="mono" fill="#7ee2a8">0 samples land</text>
+  <text x="790" y="156" text-anchor="middle" class="lbl">after the cut</text>
+  <circle cx="762" cy="178" r="9" fill="#3fb950"/>
+  <text x="800" y="182" text-anchor="middle" class="sub">gauge calm</text>
+
+  <line x1="170" y1="140" x2="189" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="345" y1="140" x2="364" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="520" y1="140" x2="555" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="631" y1="140" x2="694" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+
+  <text x="450" y="40" text-anchor="middle" class="ttl">Detect → decide → revoke → recover</text>
+  <text x="450" y="60" text-anchor="middle" class="lbl">three read-only detection signals, then one identity-bound cut that denies every leaf under the slot</text>
+  <text x="450" y="240" text-anchor="middle" class="sub">grant keys on the slot, so removing it denies the offender from that instant — no per-leaf bookkeeping, no CRL</text>
+</svg>

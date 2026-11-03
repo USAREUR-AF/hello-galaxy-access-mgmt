@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# access-mgmt — run an access-management demonstration scenario.
+#
+#   bin/access-mgmt <scenario> [--env local|<context>] [scenario args...]
+#   bin/access-mgmt list
+#   bin/access-mgmt all  [--env ...]      run every scenario in order
+#
+# Thin dispatcher: resolves the scenario folder and execs its run.sh, passing
+# the chosen environment through. All logic lives in the scenario drivers and
+# lib/access-mgmt.sh.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCEN_DIR="$ROOT/scenarios"
+
+usage() {
+  cat <<EOF
+hello-galaxy-access-mgmt — runnable identity-lifecycle scenarios
+
+usage:
+  bin/access-mgmt <scenario> [--env local|<context>] [args...]
+  bin/access-mgmt list
+  bin/access-mgmt all  [--env ...]      run every scenario in order
+
+scenarios (run in order the first time):
+EOF
+  for d in "$SCEN_DIR"/*/; do
+    name="$(basename "$d")"
+    title="$(sed -n 's/^# *//p' "$d/README.md" 2>/dev/null | head -1)"
+    printf '  %-26s %s\n' "$name" "$title"
+  done
+  cat <<EOF
+
+env:
+  --env local  (default)   the self-contained docker fabric (local-fabric/up.sh)
+  --env <ctx>              a live goat context (read-only: shows the prod command)
+
+examples:
+  bin/access-mgmt 02-rotate-live-actor
+  bin/access-mgmt 04-revoke-the-spammer --env local
+EOF
+}
+
+resolve() {
+  local q="$1" match
+  if [ -d "$SCEN_DIR/$q" ]; then echo "$q"; return 0; fi
+  match="$(ls -1 "$SCEN_DIR" | grep -E "^${q}(-|\$)|-${q}\$|${q}" | head -1 || true)"
+  [ -n "$match" ] && { echo "$match"; return 0; }
+  return 1
+}
+
+[ "$#" -eq 0 ] && { usage; exit 0; }
+case "$1" in
+  -h|--help|help) usage; exit 0 ;;
+  list) for d in "$SCEN_DIR"/*/; do basename "$d"; done; exit 0 ;;
+  all)
+    shift; rc=0
+    for d in "$SCEN_DIR"/*/; do
+      name="$(basename "$d")"
+      echo; echo "######## $name ########"
+      bash "$d/run.sh" "$@" || rc=1
+    done
+    exit "$rc" ;;
+esac
+
+scenario="$1"; shift
+folder="$(resolve "$scenario")" || { echo "unknown scenario: $scenario" >&2; echo >&2; usage >&2; exit 2; }
+run="$SCEN_DIR/$folder/run.sh"
+[ -f "$run" ] || { echo "scenario '$folder' has no run.sh" >&2; exit 2; }
+exec bash "$run" "$@"

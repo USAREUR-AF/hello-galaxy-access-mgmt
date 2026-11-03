@@ -1,0 +1,15 @@
+# local self-contained fabric — generated, never committed
+local-fabric/profiles/*/
+local-fabric/zenoh/
+local-fabric/.state/
+local-fabric/roster/slot-pool.tsv
+*.pem
+*.key
+*.srl
+
+# report run captures (the report.html itself IS committed as a sample artifact)
+report/.captures/
+*.log
+
+# os noise
+.DS_Store

@@ -1,0 +1,51 @@
+# hello-galaxy-access-mgmt — self-contained local fabric.
+#
+# A REAL zenohd router enforcing a REAL mTLS, default-deny ACL rendered from the
+# pre-cut slot pool, plus the REAL goat-fabric-health meter (the same published
+# image deployed on production fabrics, ADR 1034) with DEMO-SCALED capacity
+# targets so a laptop can drive the gauge to RED and footprints can rank a
+# flooder. Nothing here is a mock — it is the production router + meter pointed
+# at a tiny sandbox.
+#
+# Brought up by ./up.sh (which mints certs + renders the router config first).
+
+services:
+  zenoh-router:
+    image: eclipse/zenoh:1.9.0@sha256:157965d71e0bfd0a044d76a985ff0e5c306ad3968929168fb9678cd2a7fec23f
+    container_name: access-mgmt-router
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7447:7447"      # personas dial tls/127.0.0.1:7447
+    environment:
+      - RUST_LOG=${ZENOH_LOG:-zenoh=info,zenoh_transport=warn}
+    volumes:
+      - ./.state/router.json5:/etc/zenoh/config.json5:ro
+      - ./zenoh/tls:/etc/zenoh/tls:ro
+    command: ["-c", "/etc/zenoh/config.json5"]
+    networks: [fabric]
+
+  fabric-health:
+    # The SAME published meter image deployed on real fabrics (ADR 1034).
+    image: ghcr.io/usareur-af/goat-fabric-health:sha-b6ae695@sha256:253970777185295252f3e30d4ee8096a85552af3bc9aa03f5d8b17751aff57ef
+    container_name: access-mgmt-meter
+    restart: unless-stopped
+    depends_on: [zenoh-router]
+    environment:
+      FABRIC_HEALTH_ENDPOINT: "tls/access-mgmt-router:7447"
+      FABRIC_HEALTH_SITE: "access-mgmt-local"
+      FABRIC_HEALTH_INTERVAL_MS: "5000"
+      # DEMO-SCALED targets (msgs/s C0,C1,C2,C3) — small enough that a laptop can
+      # push a lane past 90%. On a production fabric these are tens of thousands.
+      FABRIC_HEALTH_TARGET_MSGS: "${AM_TARGET_MSGS:-200,200,300,400}"
+      FABRIC_HEALTH_TARGET_BYTES: "${AM_TARGET_BYTES:-200000,200000,300000,400000}"
+      FABRIC_HEALTH_CERT: "/certs/fabric-health-trial-peer-cert.pem"
+      FABRIC_HEALTH_KEY_FILE: "/certs/fabric-health-trial-peer-key.pem"
+      FABRIC_HEALTH_ROOT_CA: "/certs/ca-root-cert.pem"
+      RUST_LOG: "goat_fabric_health=info,zenoh=warn"
+    volumes:
+      - ./zenoh/tls:/certs:ro
+    networks: [fabric]
+
+networks:
+  fabric:
+    name: access-mgmt-fabric

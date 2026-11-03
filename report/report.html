@@ -1,0 +1,538 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hello-galaxy-access-mgmt — live access-management report</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --ink:#e6edf3; --dim:#9aa7b4;
+  --line:#2a323c; --accent:#f5b14c; --accent2:#5ec8cd; --green:#3fb950; --amber:#d29922;
+  --red:#f85149; --blue:#58a6ff; --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#1b2430,transparent),var(--bg);
+  color:var(--ink);font:16px/1.6 ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.wrap{max-width:980px;margin:0 auto;padding:48px 24px 96px}
+header.hero{padding:28px 0 8px;border-bottom:1px solid var(--line);margin-bottom:36px}
+.kick{color:var(--accent);font:600 13px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:34px;margin:.25em 0 .1em;letter-spacing:-.5px}
+h2{font-size:24px;margin:2.4em 0 .5em;padding-top:.4em;border-top:1px solid var(--line)}
+h3{font-size:18px;margin:1.6em 0 .4em;color:#cdd9e5}
+.lede{color:var(--dim);font-size:18px;max-width:70ch}
+.meta{color:var(--dim);font:13px/1.5 var(--mono);margin-top:14px}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font:600 12px var(--mono);
+  border:1px solid var(--line);background:var(--panel)}
+.badge.ok{color:#7ee2a8;border-color:#1f6f3f;background:#10261a}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);margin:22px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card .n{font:700 26px var(--mono);letter-spacing:-1px}
+.card .l{color:var(--dim);font-size:12.5px;margin-top:3px}
+.card.good .n{color:var(--green)} .card.warn .n{color:var(--amber)} .card.hot .n{color:var(--red)}
+figure{margin:22px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{color:var(--dim);font-size:13.5px;margin-top:12px;text-align:center}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font:600 12px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+td.mono,code{font-family:var(--mono)} code{background:var(--panel2);padding:1px 6px;border-radius:6px;font-size:13px}
+.tick{color:var(--green);font-weight:700}
+.term{background:#0a0d12;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto}
+.term pre{margin:0;font:13px/1.55 var(--mono);color:#c9d4df;white-space:pre-wrap;word-break:break-word}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:12px 0;padding:4px 16px}
+summary{cursor:pointer;font-weight:600;padding:10px 0}
+.pill{font:600 11px var(--mono);padding:2px 8px;border-radius:999px}
+.pill.live{color:#7ee2a8;background:#10261a;border:1px solid #1f6f3f}
+.pill.rep{color:#e7c07b;background:#241c0e;border:1px solid #6f561f}
+.note{color:var(--dim);font-size:14px;border-left:3px solid var(--accent);padding:6px 0 6px 14px;margin:14px 0}
+a{color:var(--blue)}
+@media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><div class="wrap">
+
+<header class="hero">
+  <div class="kick">hello-galaxy · usareur-af</div>
+  <h1>Dynamic access management on the goat fabric</h1>
+  <p class="lede">Rotating a live actor's credential with zero downtime, and detecting &amp;
+  revoking a flooding one in seconds — proven end-to-end against a real Zenoh router and the
+  real production health meter. <strong>The enabling engineering: a pre-cut UUID slot pool.</strong></p>
+  <div class="meta">generated 2026-06-19 21:26:52Z · env: local self-contained fabric · <span class="badge ok">16 checks passed, 0 failed</span></div>
+</header>
+
+<div class="grid">
+  <div class="card good"><div class="n">16/16</div><div class="l">assertions passed (live)</div></div>
+  <div class="card good"><div class="n">0</div><div class="l">router reloads to rotate a credential</div></div>
+  <div class="card hot"><div class="n">268</div><div class="l">spammer msgs/s detected (max ≈ 50)</div></div>
+  <div class="card good"><div class="n">0</div><div class="l">samples landed after the cut</div></div>
+</div>
+
+<h2 id="surface">What's under the surface: the pre-cut slot pool</h2>
+<p>The fabric is <strong>brokerless</strong> — a Zenoh router moves messages peer-to-peer with no
+central broker. That buys scale and resilience, but the router's access-control list (ACL) is
+<strong>static</strong>: read at startup, not safely hot-editable per tenant under live traffic.
+So how do you manage identities <em>dynamically</em>? You don't make the ACL dynamic — you
+<strong>pre-cut a pool of identity slots into it up front</strong>. Each slot is a fixed 32-hex
+anchor; its write grant is keyed on the certificate Common Name being equal to that anchor; and
+the grant follows the <strong>slot</strong>, never a particular leaf. That one decision is what
+makes rotate and revoke cheap.</p>
+
+<figure>
+<svg viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#5ec8cd"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{fill:#9aa7b4;font-size:13px} .ttl{fill:#e6edf3;font-size:16px;font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .anchor{fill:#f5b14c;font-size:13px} .grant{fill:#7ee2a8;font-size:12px}
+    .free{fill:#e7c07b;font-size:12px}
+  </style>
+
+  <!-- leaf certs (left) -->
+  <text x="20" y="28" class="lbl">leaf certificates (CN = anchor)</text>
+  <g>
+    <rect x="20" y="44" width="190" height="46" rx="8" fill="#1c232c" stroke="#2a323c"/>
+    <text x="34" y="64" class="lbl">weather-vane</text>
+    <text x="34" y="82" class="mono anchor">a11ce551…</text>
+    <rect x="20" y="104" width="190" height="46" rx="8" fill="#1c232c" stroke="#2a323c"/>
+    <text x="34" y="124" class="lbl">steady-eddie</text>
+    <text x="34" y="142" class="mono anchor">5addecaf…</text>
+    <rect x="20" y="164" width="190" height="46" rx="8" fill="#1c232c" stroke="#2a323c"/>
+    <text x="34" y="184" class="lbl">loud-mouth</text>
+    <text x="34" y="202" class="mono anchor">f100ded0…</text>
+    <rect x="20" y="224" width="190" height="46" rx="8" fill="#161b22" stroke="#3a2f17" stroke-dasharray="5 4"/>
+    <text x="34" y="244" class="free">(no leaf minted)</text>
+    <text x="34" y="262" class="mono free">— onboard to claim —</text>
+  </g>
+
+  <!-- router ACL (right) -->
+  <rect x="430" y="36" width="450" height="288" rx="14" fill="#12171e" stroke="#2a323c"/>
+  <text x="452" y="64" class="ttl">Zenoh router — static ACL (pre-cut)</text>
+  <text x="452" y="84" class="lbl">default-deny · grant keyed on cert CN == slot anchor</text>
+
+  <g>
+    <rect x="452" y="100" width="406" height="44" rx="8" fill="#10261a" stroke="#1f6f3f"/>
+    <text x="466" y="118" class="mono anchor">slot a11ce551…</text>
+    <text x="466" y="135" class="mono grant">allow put a11ce551…/**   → weather-vane</text>
+    <rect x="452" y="150" width="406" height="44" rx="8" fill="#10261a" stroke="#1f6f3f"/>
+    <text x="466" y="168" class="mono anchor">slot 5addecaf…</text>
+    <text x="466" y="185" class="mono grant">allow put 5addecaf…/**   → steady-eddie</text>
+    <rect x="452" y="200" width="406" height="44" rx="8" fill="#10261a" stroke="#1f6f3f"/>
+    <text x="466" y="218" class="mono anchor">slot f100ded0…</text>
+    <text x="466" y="235" class="mono grant">allow put f100ded0…/**   → loud-mouth</text>
+    <rect x="452" y="250" width="406" height="44" rx="8" fill="#1a1710" stroke="#6f561f" stroke-dasharray="5 4"/>
+    <text x="466" y="268" class="mono anchor">slot face5107…</text>
+    <text x="466" y="285" class="mono free">allow put face5107…/**   → FREE (pre-cut, unheld)</text>
+  </g>
+
+  <!-- arrows leaf->slot -->
+  <line x1="210" y1="67"  x2="452" y2="122" stroke="#5ec8cd" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="210" y1="127" x2="452" y2="172" stroke="#5ec8cd" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="210" y1="187" x2="452" y2="222" stroke="#5ec8cd" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="250" y="318" class="lbl">a leaf is admitted iff its CN matches a granted slot — authority lives on the slot, not the leaf</text>
+</svg>
+<figcaption>The pre-cut slot pool. Three slots are allocated to actors; one is free — authorised
+in the ACL with no leaf minted yet (onboarding is just handing someone that cert). Every grant
+keys on the anchor, so a leaf is admitted iff its CN matches a granted slot.</figcaption>
+</figure>
+
+<table>
+<tr><th>Operation</th><th>What moves</th><th>What the router does</th></tr>
+<tr><td><strong>Rotate</strong></td><td>a fresh leaf for the <em>same</em> anchor</td><td><span class="tick">nothing</span> — grant keys on the unchanged anchor; no re-render, no reload</td></tr>
+<tr><td><strong>Revoke</strong></td><td>the slot's grant removed (+ mesh cut)</td><td>reload once; the slot returns to the pool, ready to re-issue</td></tr>
+<tr><td><strong>Onboard</strong></td><td>hand someone a free slot's cert</td><td><span class="tick">nothing</span> — the grant was already pre-cut</td></tr>
+</table>
+
+<h2 id="rotate">Operation 1 — rotate a live actor in place</h2>
+<p><code>weather-vane</code> is a live sensor on slot <code>a11ce5510000…</code>. We watch it
+publish, rotate its credential, and watch it keep publishing — on a brand-new leaf, to the same
+namespace, seen by the same observer.</p>
+
+<figure>
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa7b4"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{fill:#9aa7b4;font-size:13px} .ttl{fill:#e6edf3;font-size:15px;font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .ok{fill:#7ee2a8;font-size:12px} .old{fill:#f85149;font-size:12px} .new{fill:#3fb950;font-size:12px}
+    .anchor{fill:#f5b14c;font-size:12px}
+  </style>
+
+  <!-- timeline spine -->
+  <line x1="40" y1="150" x2="860" y2="150" stroke="#2a323c" stroke-width="2"/>
+
+  <!-- before -->
+  <rect x="40" y="90" width="220" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="60" y="116" class="ttl">before</text>
+  <text x="60" y="140" class="lbl">weather-vane publishing</text>
+  <text x="60" y="162" class="mono anchor">anchor a11ce551…</text>
+  <text x="60" y="182" class="mono old">leaf 99:1F:9C…</text>
+  <text x="60" y="200" class="ok">observer ✓ sees samples</text>
+
+  <!-- rotate event -->
+  <circle cx="450" cy="150" r="34" fill="#1c232c" stroke="#f5b14c" stroke-width="2"/>
+  <text x="450" y="146" text-anchor="middle" class="ttl">rotate</text>
+  <text x="450" y="164" text-anchor="middle" class="lbl">in place</text>
+  <text x="450" y="232" text-anchor="middle" class="lbl">goat admin rotate weather-vane</text>
+  <text x="450" y="250" text-anchor="middle" class="ok">router: 0 reloads · ACL unchanged</text>
+
+  <line x1="260" y1="150" x2="414" y2="150" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <line x1="486" y1="150" x2="638" y2="150" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar2)"/>
+
+  <!-- after -->
+  <rect x="640" y="90" width="220" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="660" y="116" class="ttl">after</text>
+  <text x="660" y="140" class="lbl">weather-vane STILL publishing</text>
+  <text x="660" y="162" class="mono anchor">anchor a11ce551…  (same)</text>
+  <text x="660" y="182" class="mono new">leaf 85:A4:2B…  (fresh)</text>
+  <text x="660" y="200" class="ok">observer ✓ sees samples</text>
+
+  <text x="450" y="40" text-anchor="middle" class="ttl">Credential refreshes; identity (the slot) persists</text>
+  <text x="450" y="62" text-anchor="middle" class="lbl">the leaf fingerprint changes — the anchor and the router ACL do not</text>
+</svg>
+<figcaption>The credential refreshes while the identity (the slot) persists. The leaf fingerprint
+changes; the anchor and the router ACL do not.</figcaption>
+</figure>
+
+<table>
+<tr><th>Evidence (read back from the live run)</th><th>Value</th></tr>
+<tr><td>leaf fingerprint before</td><td class="mono">85:A4:2B:62:86:9C:04:19…</td></tr>
+<tr><td>leaf fingerprint after</td><td class="mono">EE:71:29:67:7E:C6:78:DC…</td></tr>
+<tr><td>router config hash before</td><td class="mono">8c9b302a26c06f22……</td></tr>
+<tr><td>router config hash after</td><td class="mono">8c9b302a26c06f22……</td></tr>
+<tr><td>ACL untouched (hashes equal)?</td><td><span class="tick">yes — zero router reloads</span></td></tr>
+<tr><td>scenario result</td><td>result ─ 5 passed, 0 failed</td></tr>
+</table>
+<details><summary>Full captured output — 02-rotate-live-actor</summary>
+<div class="term"><pre>
+════════════════════════════════════════════════════════════
+  Rotate a live actor — fresh leaf, same identity, zero downtime
+════════════════════════════════════════════════════════════
+  weather-vane keeps publishing across a credential rotation.
+  env: local
+
+── Step 1 ─ 1 — weather-vane is alive and publishing on its slot
+  • slot anchor: a11ce551000000000000000000000000
+  ✓ publishing — observer saw it land (pre-rotation)
+  • leaf fingerprint (old): 85:A4:2B:62:86:9C:04:19…
+  • router config hash:     8c9b302a26c06f22…
+
+── Step 2 ─ 2 — Rotate the credential IN PLACE
+$ goat admin rotate weather-vane   (here: local-fabric/rotate.sh)
+    ==&gt; rotating slot weather-vane (a11ce551000000000000000000000000)
+        old leaf  serial=41CC8F3ED70D9CAD60DA8E2EB887DBAAD90FD136
+        old leaf  sha256=85:A4:2B:62:86:9C:04:19:6A:0A:A5:88:18:78:23:AF:2D:4A:BB:3A:CD:EB:C1:18:5E:7A:22:D1:6C:0D:5A:D0
+        new leaf  serial=41CC8F3ED70D9CAD60DA8E2EB887DBAAD90FD137
+        new leaf  sha256=EE:71:29:67:7E:C6:78:DC:51:2C:21:EA:F7:39:F8:16:3E:31:B3:43:B1:EE:62:5D:85:76:B9:22:E7:01:02:ED
+    
+        ✓ leaf changed (fresh key + serial)
+        ✓ anchor unchanged: a11ce551000000000000000000000000  (same write namespace, same ACL grant)
+        ✓ router config NOT re-rendered, router NOT reloaded
+  • leaf fingerprint (new): EE:71:29:67:7E:C6:78:DC…
+  • router config hash:     8c9b302a26c06f22…
+
+── Step 3 ─ 3 — weather-vane keeps publishing — on the NEW leaf, same slot
+  ✓ still publishing — observer saw it land (post-rotation)
+
+── Step 4 ─ Verify the rotation was safe + dynamic
+  ✓ actor was publishing before rotation
+  ✓ actor still publishing after rotation
+  ✓ the leaf certificate genuinely changed
+  ✓ the slot anchor did NOT move (same identity)
+  ✓ the router ACL was untouched (config unchanged)
+  ⓘ honesty: the old leaf is not cryptographically revoked (no CRL/OCSP by design);
+  ⓘ honesty: for compromise, compose rotation with the mesh-first cut in scenario 04.
+
+Next: bin/access-mgmt 03-detect-the-spammer
+
+── result ─ 5 passed, 0 failed</pre></div></details>
+
+<h2 id="detect">Operation 2a — detect the spammer</h2>
+<p><code>loud-mouth</code> (slot <code>f100ded00000…</code>) floods the situational lane. Three
+complementary, read-only, honest signals find it.</p>
+
+<figure>
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="ar3" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa7b4"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{fill:#9aa7b4;font-size:12.5px} .ttl{fill:#e6edf3;font-size:14px;font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+    .sub{fill:#9aa7b4;font-size:11px}
+  </style>
+
+  <!-- 5 stages across -->
+  <!-- 1 flood -->
+  <rect x="20" y="80" width="150" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="95" y="106" text-anchor="middle" class="ttl">1 · flood</text>
+  <text x="95" y="132" text-anchor="middle" class="lbl">loud-mouth</text>
+  <text x="95" y="150" text-anchor="middle" class="mono" fill="#f85149">450 msgs/s</text>
+  <text x="95" y="172" text-anchor="middle" class="sub">situational lane</text>
+
+  <!-- 2 gauge -->
+  <rect x="195" y="80" width="150" height="120" rx="12" fill="#1a0f10" stroke="#6f2723"/>
+  <text x="270" y="106" text-anchor="middle" class="ttl">2 · gauge</text>
+  <circle cx="270" cy="142" r="20" fill="#f85149"/>
+  <text x="270" y="147" text-anchor="middle" class="mono" fill="#0e1116" font-weight="700">RED</text>
+  <text x="270" y="184" text-anchor="middle" class="sub">goat health · C2 over target</text>
+
+  <!-- 3 footprint -->
+  <rect x="370" y="80" width="150" height="120" rx="12" fill="#161b22" stroke="#2a323c"/>
+  <text x="445" y="106" text-anchor="middle" class="ttl">3 · footprint</text>
+  <text x="445" y="132" text-anchor="middle" class="mono" fill="#f5b14c">rank #1</text>
+  <text x="445" y="152" text-anchor="middle" class="lbl">⚠ near-limit</text>
+  <text x="445" y="176" text-anchor="middle" class="sub">names the identity</text>
+
+  <!-- 4 cut -->
+  <circle cx="595" cy="140" r="36" fill="#1c232c" stroke="#f5b14c" stroke-width="2"/>
+  <text x="595" y="136" text-anchor="middle" class="ttl">4 · cut</text>
+  <text x="595" y="154" text-anchor="middle" class="lbl">slot reclaim</text>
+  <text x="595" y="200" text-anchor="middle" class="sub">mesh-first revoke</text>
+
+  <!-- 5 denied+recover -->
+  <rect x="700" y="80" width="180" height="120" rx="12" fill="#0f1a12" stroke="#1f6f3f"/>
+  <text x="790" y="106" text-anchor="middle" class="ttl">5 · denied → recover</text>
+  <text x="790" y="134" text-anchor="middle" class="mono" fill="#7ee2a8">0 samples land</text>
+  <text x="790" y="156" text-anchor="middle" class="lbl">after the cut</text>
+  <circle cx="762" cy="178" r="9" fill="#3fb950"/>
+  <text x="800" y="182" text-anchor="middle" class="sub">gauge calm</text>
+
+  <line x1="170" y1="140" x2="189" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="345" y1="140" x2="364" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="520" y1="140" x2="555" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="631" y1="140" x2="694" y2="140" stroke="#9aa7b4" stroke-width="1.4" marker-end="url(#ar3)"/>
+
+  <text x="450" y="40" text-anchor="middle" class="ttl">Detect → decide → revoke → recover</text>
+  <text x="450" y="60" text-anchor="middle" class="lbl">three read-only detection signals, then one identity-bound cut that denies every leaf under the slot</text>
+  <text x="450" y="240" text-anchor="middle" class="sub">grant keys on the slot, so removing it denies the offender from that instant — no per-leaf bookkeeping, no CRL</text>
+</svg>
+<figcaption>Flood → the gauge goes off-green → the per-producer footprint names the culprit
+(rank&nbsp;#1, near-limit) → the operator cuts the slot → the offender's writes are denied →
+the lane recovers.</figcaption>
+</figure>
+
+<table>
+<tr><th>Signal</th><th>Surface</th><th>Live reading</th><th>Grade</th></tr>
+<tr><td>Lane load</td><td><code>goat health</code> gauge</td><td>RED (C2 328/300)</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Attribution</td><td><code>goat health --peer</code> footprint</td><td>rank #1, near-limit, 268 msgs/s</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Expectation</td><td><code>goat top</code> envelope band</td><td>OVER (268 ≫ max 50)</td><td><span class="pill rep">rate live · registry represented</span></td></tr>
+</table>
+<details><summary>Full captured output — 03-detect-the-spammer</summary>
+<div class="term"><pre>
+════════════════════════════════════════════════════════════
+  Detect the spammer — gauge, footprint, envelope band
+════════════════════════════════════════════════════════════
+  Find the flooder and be sure which identity it is — before cutting.
+  env: local
+
+── Step 1 ─ 1 — Baseline: the gauge is calm
+    waiting for the next fabric-health beat (up to 12s)…
+    FABRIC: IDLE   (site access-mgmt-local, 1 producers, 5s window, n=3)
+      ⓘ idle = no traffic to confirm health this window — UNCONFIRMED, not "healthy".
+      cls      msgs/s     of target  headroom        n  state
+      C0            1         1/200         —        3  IDLE
+      C1            0         0/200         —        0  IDLE
+      C2            0         0/300         —        0  IDLE
+      C3            0         0/400         —        0  IDLE
+
+── Step 2 ─ 2 — loud-mouth starts flooding the situational lane
+  • offender slot: f100ded0000000000000000000000000
+$ goat mock f100ded0000000000000000000000000/sensor/flood --rate 450   (background)
+
+── Step 3 ─ 3 — Detection signal #1: the health gauge goes off green
+    waiting for the next fabric-health beat (up to 12s)…
+    FABRIC: RED   (site access-mgmt-local, 2 producers, 5s window, n=2202)
+      cls      msgs/s     of target  headroom        n  state
+      C0            1         1/200         —        3  IDLE
+      C1            0         0/200         —        0  IDLE
+      C2          440       440/300        0%     2199  RED
+      C3            0         0/400         —        0  IDLE
+
+── Step 4 ─ 4 — Detection signal #2: the per-producer footprint names the culprit
+The gauge says the lane is hot; the footprint says WHO:
+    your footprint — peer f100ded0000000000000000000000000 — rank #1 — 268 msgs/s, 12078 B/s  ⚠ near-limit
+      C2            268 msgs/s          12078 B/s
+
+── Step 5 ─ 5 — Detection signal #3: the throughput-envelope band
+Each registered actor has a declared expected range {min,mean,high,max}.
+loud-mouth's declared band (situational telemetry): max ≈ 50 msgs/s.
+  • observed rate: 268 msgs/s   vs declared max 50 msgs/s
+  ! BAND = OVER  (268 msgs/s ≫ max 50) — flooding past its declared ceiling
+  ⓘ honesty: the band is rendered live by 'goat top' against the portal envelope
+  ⓘ honesty: registry; the local fabric runs no portal, so we compute it from the
+  ⓘ honesty: footprint rate above. The rate + verdict are real; the registry is represented.
+
+── Step 6 ─ Verify the detection
+  ✓ the flood drove the gauge off GREEN (AMBER/RED)
+  ✓ the footprint ranked the offender #1
+  ✓ the footprint flagged it near-limit
+  ✓ the observed rate is OVER the declared band
+(flood stopped; nothing cut — that's scenario 04's job)
+
+Next: bin/access-mgmt 04-revoke-the-spammer
+
+── result ─ 4 passed, 0 failed</pre></div></details>
+
+<h2 id="revoke">Operation 2b — revoke the spammer</h2>
+<p>Mesh-first revocation has two halves: delete the offender's mesh peer (authoritative + instant;
+represented on a laptop), and reclaim its slot from the ACL (run here for real). Because the grant
+keys on the slot, removing it denies every leaf under it at once — no per-leaf bookkeeping, no
+certificate revocation list.</p>
+
+<table>
+<tr><th>Evidence (read back from the live run)</th><th>Value</th></tr>
+<tr><td>gauge under flood</td><td>RED (C2 328/300)</td></tr>
+<tr><td>samples observer saw <em>after</em> the cut</td><td><span class="tick">0</span> (writes denied)</td></tr>
+<tr><td>scenario result</td><td>result ─ 4 passed, 0 failed</td></tr>
+</table>
+<details><summary>Full captured output — 04-revoke-the-spammer</summary>
+<div class="term"><pre>
+════════════════════════════════════════════════════════════
+  Revoke the spammer — reclaim its slot, deny its writes, recover
+════════════════════════════════════════════════════════════
+  Mesh-first revocation: the cut lands in seconds.
+  env: local
+
+── Step 1 ─ 1 — Recap: loud-mouth floods, the gauge goes red
+$ goat mock f100ded0000000000000000000000000/sensor/flood --rate 450   (background)
+    waiting for the next fabric-health beat (up to 12s)…
+    FABRIC: RED   (site access-mgmt-local, 2 producers, 5s window, n=1645)
+      cls      msgs/s     of target  headroom        n  state
+      C0            1         1/200         —        3  IDLE
+      C1            0         0/200         —        0  IDLE
+      C2          328       328/300        0%     1642  RED
+      C3            0         0/400         —        0  IDLE
+    your footprint — peer f100ded0000000000000000000000000 — rank #1 — 262 msgs/s, 11772 B/s  ⚠ near-limit
+      C2            262 msgs/s          11772 B/s
+
+── Step 2 ─ 2 — The operator decides: this producer is the offender. Cut it.
+Rank #1, near-limit, owning the lane (scenario 03). Revoke it.
+
+── Step 3 ─ 3 — REVOKE: mesh-first cut + reclaim the slot from the ACL
+$ goat admin onboard loud-mouth --revoke   (here: local-fabric/revoke.sh)
+(mesh cut is represented locally; the slot reclaim is run for real)
+    ==&gt; reclaiming the loud-mouth slot (f100ded0000000000000000000000000) from the ACL
+    router reloaded (revoke)
+
+── Step 4 ─ 4 — Verify the offender is now DENIED
+It keeps trying to publish across the cut; a real observer sees nothing land:
+  • samples the observer saw from the offender AFTER the cut: 0
+
+── Step 5 ─ 5 — Recover: the gauge returns to calm
+    waiting for the next fabric-health beat (up to 12s)…
+    FABRIC: IDLE   (site access-mgmt-local, 1 producers, 5s window, n=2)
+      ⓘ idle = no traffic to confirm health this window — UNCONFIRMED, not "healthy".
+      cls      msgs/s     of target  headroom        n  state
+      C0            0         0/200         —        2  IDLE
+      C1            0         0/200         —        0  IDLE
+      C2            0         0/300         —        0  IDLE
+      C3            0         0/400         —        0  IDLE
+
+── Step 6 ─ Restore the slot (so this scenario is repeatable)
+slot returned to the pool — loud-mouth could be re-issued, or left cut.
+
+── Step 7 ─ Verify the whole arc
+  ✓ the flood drove the gauge off GREEN (AMBER/RED)
+  ✓ the cut DENIED the offender's writes (observer saw nothing)
+  ✓ the situational lane recovered (C2 load fell back)
+  ✓ the gauge is no longer RED
+  ⓘ honesty: an AUTOMATIC detector→revoke (no human) and the relay's automatic per-peer
+  ⓘ honesty: rate-cap are designed, not built — here the operator makes the call.
+
+That's the lifecycle: pre-cut slots → rotate in place → detect → revoke.
+
+── result ─ 4 passed, 0 failed</pre></div></details>
+
+<h2 id="slotpool-run">The slot pool, proven</h2>
+<details><summary>Full captured output — 01-the-slot-pool (per-slot ACL scoping)</summary>
+<div class="term"><pre>
+════════════════════════════════════════════════════════════
+  The slot pool — what makes dynamic access management possible
+════════════════════════════════════════════════════════════
+  Static router ACL + pre-cut slots = rotate and revoke without a rebuild.
+  env: local
+
+── Step 1 ─ 1 — The pre-cut pool
+  • weather-vane  a11ce551000000000000000000000000  ALLOCATED — live actor (rotated)
+  • steady-eddie  5addecaf000000000000000000000000  ALLOCATED — control producer
+  • loud-mouth    f100ded0000000000000000000000000  ALLOCATED — spammer (revoked)
+  • (free)        face5107000000000000000000000000  FREE — pre-cut, awaiting a holder
+Three slots are ALLOCATED to actors; one is FREE — pre-cut into the ACL
+but with no leaf minted. Onboarding = handing someone that free slot's cert.
+
+── Step 2 ─ 2 — The ACL is keyed on the slot anchor, not the leaf
+Here are the live router's per-slot write grants (rendered config):
+    { id: "w-weather", messages: ["put","delete"], flows: ["ingress"], permission: "allow",
+    { id: "w-steady", messages: ["put","delete"], flows: ["ingress"], permission: "allow",
+    { id: "w-loud", messages: ["put","delete"], flows: ["ingress"], permission: "allow",
+    { id: "w-free", messages: ["put","delete"], flows: ["ingress"], permission: "allow",
+    { id: "s-weather", cert_common_names: ["a11ce551000000000000000000000000"] },
+    { id: "s-steady",  cert_common_names: ["5addecaf000000000000000000000000"] },
+    { id: "s-loud", cert_common_names: ["f100ded0000000000000000000000000"] },
+    { id: "s-free",    cert_common_names: ["face5107000000000000000000000000"] },
+    { rules: ["w-weather"], subjects: ["s-weather"] },
+    { rules: ["w-steady"], subjects: ["s-steady"] },
+    { rules: ["w-loud"], subjects: ["s-loud"] },
+    { rules: ["w-free"], subjects: ["s-free"] },
+Each 'w-&lt;slot&gt;' rule allows writes to &lt;anchor&gt;/** ; each 's-&lt;slot&gt;' subject
+matches a leaf whose CN == that anchor. The grant is bound to the SLOT.
+
+── Step 3 ─ 3 — A leaf may write only its OWN slot (default-deny everywhere else)
+weather-vane writes its own anchor — admitted + routed to a real observer:
+  ✓ weather-vane → its own slot: ADMITTED (observer saw it)
+Now weather-vane tries to write steady-eddie's anchor — not its slot:
+  ✓ weather-vane → steady-eddie's slot: DENIED (observer saw nothing)
+
+── Step 4 ─ 4 — Why this makes rotate &amp; revoke trivial
+Because authority lives on the SLOT:
+  • ROTATE: a fresh leaf with the same CN is admitted by the same rule —
+  •         no ACL change, no router reload.  (scenario 02 proves it)
+  • REVOKE: drop the slot's rule + reload, and every leaf under it is denied
+  •         at once — no per-leaf bookkeeping, no CRL.  (scenario 04 proves it)
+
+── Step 5 ─ Verify
+  ✓ weather-vane can write its own slot
+  ✓ a cross-slot write is denied (per-slot scoping holds)
+  ✓ the free slot is authorised in the ACL with no leaf minted
+
+Next: bin/access-mgmt 02-rotate-live-actor
+
+── result ─ 3 passed, 0 failed</pre></div></details>
+
+<h2 id="honesty">Honesty matrix — live vs represented</h2>
+<p class="note">Every claim is graded. The two headline operations are entirely live; the only
+represented pieces are the ones a laptop structurally cannot run (a WireGuard mesh) or that need a
+component the self-contained fabric omits (the portal envelope registry).</p>
+<table>
+<tr><th>Element</th><th>In this demo</th><th>Grade</th></tr>
+<tr><td>Zenoh router + mTLS, default-deny ACL</td><td>real <code>eclipse/zenoh:1.9.0</code>, pinned</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Fabric-health meter / gauge / footprint</td><td>the same published image deployed on production fabrics</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Pre-cut slot pool + per-slot ACL scoping</td><td>real grants keyed on cert CN == anchor</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Rotate-in-place (fresh leaf, same anchor)</td><td>real re-mint + swap; router config unchanged</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Revoke = slot reclaim → writes denied</td><td>real ACL edit + reload; observer sees nothing</td><td><span class="pill live">live</span></td></tr>
+<tr><td>Mesh-first cut (delete the NetBird peer)</td><td>no mesh on a laptop — the prod-authoritative half</td><td><span class="pill rep">represented</span></td></tr>
+<tr><td>Throughput-envelope band via portal registry</td><td>no portal locally; rate live, band computed</td><td><span class="pill rep">represented</span></td></tr>
+<tr><td>Automatic detector→revoke loop / relay rate-cap</td><td>designed, not built — operator makes the call</td><td><span class="pill rep">represented</span></td></tr>
+</table>
+
+<h2 id="map">How this maps to the production capability</h2>
+<table>
+<tr><th>Here (local)</th><th>Production goat</th><th>Design</th></tr>
+<tr><td><code>local-fabric/rotate.sh</code></td><td><code>goat admin rotate &lt;anchor|alias&gt;</code></td><td>ADR 1044 · credential-rotation</td></tr>
+<tr><td><code>local-fabric/revoke.sh</code> (flooder cut)</td><td><code>goat admin peer cut &lt;peer&gt;</code> (emergency, mesh-first)</td><td>ADR 1031 · mesh-first offboarding</td></tr>
+<tr><td><code>local-fabric/revoke.sh</code> (full offboard)</td><td><code>goat admin onboard &lt;handle&gt; --revoke</code></td><td>ADR 1031 · mesh-first offboarding</td></tr>
+<tr><td>pre-cut slot ACL in <code>lib-fabric.sh</code></td><td>the slot-pool write-anchor ACL</td><td>ADR 1025 · dynamic tenant authz</td></tr>
+<tr><td><code>goat health</code> gauge + footprint</td><td>same meter image</td><td>ADR 1034 · fabric-health surface</td></tr>
+<tr><td>envelope band (represented)</td><td><code>goat top</code> band</td><td>ADR 1045 · throughput envelopes</td></tr>
+</table>
+
+<p class="meta">Built-vs-designed and the two build findings are in <code>FINDINGS.md</code>. This report
+is regenerated by <code>report/generate-report.sh</code> — re-run it and every number above is read
+back fresh from a live run.</p>
+
+</div></body></html>
