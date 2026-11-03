@@ -56,3 +56,34 @@ jobs:
           render_router_config revoke | grep -q "s-loud"            && { echo "revoke config still grants loud-mouth"; exit 1; }
           render_router_config revoke | grep -q "s-weather"         || { echo "revoke config wrongly dropped an unrelated slot"; exit 1; }
           echo "slot-pool ACL render OK (full grants all slots; revoke reclaims only loud-mouth)"
+
+  local-fabric:
+    # The README's local walkthrough end to end: local-fabric/up.sh, every scenario
+    # with --env local, then local-fabric/down.sh. Needs Docker (on the runner) and the
+    # released goat CLI. Both images in local-fabric/docker-compose.yml are public.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GOAT_CLI_RELEASE: goat-cli-v0.5.14
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch the released goat CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/goat" && cd "$RUNNER_TEMP/goat"
+          gh release download "$GOAT_CLI_RELEASE" --repo usareur-af/goatcore \
+            --pattern 'goat-linux-amd64*' --clobber
+          sha256sum -c goat-linux-amd64.sha256
+          sudo install -m 0755 goat-linux-amd64 /usr/local/bin/goat
+          goat --version
+      - name: bring up the local fabric
+        run: local-fabric/up.sh
+      - name: run every scenario against the local fabric
+        run: bin/access-mgmt all --env local
+      - name: fabric logs
+        if: failure()
+        run: docker compose -f local-fabric/docker-compose.yml logs --tail=80
+      - name: tear down
+        if: always()
+        run: local-fabric/down.sh

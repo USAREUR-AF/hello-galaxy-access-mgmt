@@ -37,6 +37,9 @@ rm -f "$FAB_TLS/router.csr"
 echo "==> infra leaves (operator, meter)"
 fab_mint_leaf operator
 fab_mint_leaf fabric-health-trial-peer
+# The meter image runs as a non-root user (65532) and reads this throwaway key
+# through a bind mount; openssl writes keys 0600, so open it for reading.
+chmod 0644 "$FAB_TLS/fabric-health-trial-peer-key.pem"
 
 echo "==> slot leaves (CN == anchor) for the allocated slots"
 fab_mint_leaf "$FAB_ANCHOR_WEATHER"

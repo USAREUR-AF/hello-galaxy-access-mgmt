@@ -1,8 +1,8 @@
 # Do it for real — backend admin runbook
 
 The scenarios run against the disposable local fabric so anyone can follow along
-with no credentials. If you **are** a backend admin with operator credentials on a
-goatnet of your own, here are the actual production commands to rotate and
+with no credentials. If you **are** a backend admin with operator credentials on the
+goatnet you are using, here are the actual production commands to rotate and
 revoke for real. They are the same operations the demo dramatizes — these are not
 simulations.
 
@@ -19,9 +19,12 @@ scope, NetBird checks the admin token. Without them the calls are denied — whi
 is why the demo's `--env <live>` mode is read-only for everyone, and why these
 work only for an actual admin. The gate is real, not a README disclaimer.
 
-Point `goat` at your goatnet with `--context <ctx>` (or `--env <ctx>` where a
-command takes it). To build a goatnet, start from the goatlite quickstart in
-[goatcore](https://github.com/usareur-af/goatcore) (`docs/tutorials/00-goatlite.md`).
+Point `goat` at the goatnet with `--context <ctx>` (or `--env <ctx>` where a
+command takes it). It can be any goatnet where you are an operator:
+EFDI if its operators have made you one, <!-- oss-allow: operator-approved public example goatnet -->
+a goatlite you stand up yourself (the goatlite quickstart in
+[goatcore](https://github.com/usareur-af/goatcore), `docs/tutorials/00-goatlite.md`),
+or another goatnet you operate.
 
 ---
 

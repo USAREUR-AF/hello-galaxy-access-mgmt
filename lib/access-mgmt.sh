@@ -9,7 +9,7 @@
 #   - local (DEFAULT) — the self-contained docker-compose fabric (real zenohd +
 #     the real goat-fabric-health meter) under local-fabric/. The rotate/revoke
 #     arcs need control of the router, so this is the default.
-#   - <context>       — a live goat context (your goatnet). Read-only here: it shows
+#   - <context>       — a live goat context (any goatnet you have access to). Read-only here: it shows
 #     the production command + proves the standing ACL floor is live, and is
 #     honest that the full lifecycle arc runs in --env local.
 
