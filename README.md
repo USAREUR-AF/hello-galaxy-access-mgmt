@@ -141,3 +141,7 @@ FINDINGS.md                what didn't work first try, and how it was fixed
 
 Part of the **hello-galaxy** family of runnable goat demos (universal-id,
 zenoh-patterns, spire-spiffe-patterns).
+
+## Licence
+
+`hello-galaxy-access-mgmt` was written by U.S. Federal government employees. In the U.S. it is not subject to copyright and is in the public domain; in countries where copyright is recognized, it is released under the [Apache License 2.0](LICENSE). See [INTENT.md](INTENT.md).
