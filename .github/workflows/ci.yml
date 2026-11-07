@@ -11,7 +11,7 @@ jobs:
   lint-and-structure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: shellcheck the scripts
         run: |
@@ -66,7 +66,7 @@ jobs:
     env:
       GOAT_CLI_RELEASE: goat-cli-v0.5.14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: fetch the released goat CLI
         env:
           GH_TOKEN: ${{ github.token }}
