@@ -21,7 +21,6 @@ work only for an actual admin. The gate is real, not a README disclaimer.
 
 Point `goat` at the goatnet with `--context <ctx>` (or `--env <ctx>` where a
 command takes it). It can be any goatnet where you are an operator:
-EFDI if its operators have made you one, <!-- oss-allow: operator-approved public example goatnet -->
 a goatlite you stand up yourself (the goatlite quickstart in
 [goatcore](https://github.com/usareur-af/goatcore), `docs/tutorials/00-goatlite.md`),
 or another goatnet you operate.
