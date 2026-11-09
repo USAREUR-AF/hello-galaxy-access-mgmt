@@ -79,7 +79,6 @@ local-fabric/down.sh
 
 Every scenario *also* accepts `--env <goat-context>` to point at a live goatnet
 you have access to:
-EFDI, the shared sandbox goatnet that partners are onboarded to (if you are onboarded to it); <!-- oss-allow: operator-approved public example goatnet -->
 a goatlite you stand up yourself (goatcore's goatlite quickstart,
 `docs/tutorials/00-goatlite.md`); or another goatnet you have access to. That's
 the **only** mode that needs an
