@@ -1,5 +1,10 @@
 # hello-galaxy-access-mgmt
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/slot-pool-dark.svg">
+  <img src="docs/figures/slot-pool-light.svg" width="760" alt="The local Zenoh router's static, default-deny access list holds four pre-cut slots: weather-vane is rotated to a fresh certificate with the same anchor and keeps publishing with no change to the list; loud-mouth is revoked by removing its slot's grant and its writes are denied; steady-eddie publishes throughout; the fourth slot is free.">
+</picture>
+
 **A hands-on demonstration of how the goat data fabric manages identities over
 their lifetime — rotating a live actor's credential with zero downtime, and
 detecting & revoking a misbehaving one in seconds — that you can run yourself in
